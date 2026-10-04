@@ -3,7 +3,7 @@ using UnityEngine;
 public class PlayerController : MonoBehaviour
 {
     [Header("Movement Settings")]
-    [SerializeField] private float moveSpeed = 35f; 
+    [SerializeField] private float moveSpeed = 35f;
 
     [SerializeField] private Vector2 xBounds = new Vector2(-198f, 173f);
     [SerializeField] private Vector2 zBounds = new Vector2(-157f, 168f);
@@ -21,8 +21,9 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float centerDeadzone = 2.0f;
 
     [Header("Shooting Settings")]
-    [SerializeField] private float attackRange = 150f; 
-    [SerializeField] private LayerMask asteroidLayer;
+    [SerializeField] private float attackRange = 150f;
+    [Tooltip("Make sure to check both the Asteroid and Enemy layers in your inspector dropdown context!")]
+    [SerializeField] private LayerMask shootableLayers;
     [SerializeField] private Transform firePoint;
 
     private Rigidbody rb;
@@ -79,7 +80,6 @@ public class PlayerController : MonoBehaviour
                 Vector3 lookPoint = ray.GetPoint(rayDistance);
                 Vector3 targetDirection = new Vector3(lookPoint.x, 0f, lookPoint.z) - transform.position;
 
-                // DEADZONE CHECK: Snap straight forward if cursor gets too close
                 if (targetDirection.magnitude < centerDeadzone)
                 {
                     targetDirection = Vector3.forward;
@@ -90,14 +90,12 @@ public class PlayerController : MonoBehaviour
                     float angle = Vector3.SignedAngle(Vector3.forward, targetDirection, Vector3.up);
                     angle = Mathf.Clamp(angle, -maxAimAngle, maxAimAngle);
 
-                    // Update internal destination rotation target
                     targetRotation = Quaternion.Euler(0f, angle, 0f);
                 }
             }
         }
 
         transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
-
         transform.rotation = Quaternion.Euler(0f, transform.rotation.eulerAngles.y, 0f);
     }
 
@@ -109,6 +107,10 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Section A / B Modular Shooting Method.
+    /// Neutralizes asteroids and enemies on impact without raising the scrap collection score metrics.
+    /// </summary>
     private void ExecuteRaycastShoot()
     {
         Debug.Log("Player fired a laser bolt.");
@@ -117,21 +119,28 @@ public class PlayerController : MonoBehaviour
         Vector3 rayOrigin = firePoint != null ? firePoint.position : transform.position;
         Vector3 rayDirection = firePoint != null ? firePoint.forward : transform.forward;
 
-        if (Physics.Raycast(rayOrigin, rayDirection, out hit, attackRange, asteroidLayer))
+        if (Physics.Raycast(rayOrigin, rayDirection, out hit, attackRange, shootableLayers))
         {
             Debug.Log($"Raycast Hit Target: {hit.collider.name}");
 
+            // Handle hitting an Asteroid
             if (hit.collider.CompareTag("Asteroid"))
             {
                 Destroy(hit.collider.gameObject);
-                Debug.Log("Asteroid successfully shattered via Raycast!");
+                Debug.Log("[Combat] Asteroid successfully shattered via Raycast!");
+            }
+            // Handle hitting an Enemy Drone
+            else if (hit.collider.CompareTag("Enemy"))
+            {
+                Destroy(hit.collider.gameObject);
+                Debug.Log("[Combat] Hostile Scavenger Drone neutralized via weapon Raycast!");
+                // FIXED: Score awarding removed from here to separate combat tracking from collection milestones
             }
         }
     }
 
     private void OnTriggerEnter(Collider other)
     {
-        //Crash into Asteroid
         if (other.CompareTag("Asteroid"))
         {
             Debug.Log("3D Asteroid hit the Player via Trigger trigger zone!");
@@ -159,6 +168,6 @@ public class PlayerController : MonoBehaviour
             Debug.LogWarning("GameManager Instance is missing from the active runtime execution!");
         }
 
-        Destroy(gameObject); //destroys player object
+        Destroy(gameObject);
     }
 }
