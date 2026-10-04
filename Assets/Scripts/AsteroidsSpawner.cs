@@ -18,10 +18,10 @@ public class AsteroidsSpawner : MonoBehaviour
 
     [Header("Player Safety Buffer")]
     [SerializeField] private Transform playerTransform;
-    [SerializeField] private float safeDistanceZone = 10f; 
+    [SerializeField] private float safeDistanceZone = 10f;
 
     [Header("Scatter Settings")]
-    [SerializeField] private Vector2 speedRange = new Vector2(5f, 15f); 
+    [SerializeField] private Vector2 speedRange = new Vector2(5f, 15f);
     [SerializeField] private float maxSidewaysScatter = 5f;
 
     private List<GameObject> activeAsteroids = new List<GameObject>();
@@ -39,10 +39,10 @@ public class AsteroidsSpawner : MonoBehaviour
 
     private void Update()
     {
-        //Monitors the list for missing references (destroyed by the box collider physical boundary or player laser)
+        // Monitors the list for missing references (destroyed by the box collider physical boundary or player laser)
         MonitorActiveAsteroids();
 
-        //Replenish missing items to keep a steady flow
+        // Replenish missing items to keep a steady flow
         MaintainAsteroidPopulation();
     }
 
@@ -95,17 +95,39 @@ public class AsteroidsSpawner : MonoBehaviour
             attempts++;
         }
 
-        GameObject spawnedAsteroid = Instantiate(asteroidPrefab, spawnPosition, Quaternion.identity);
-        activeAsteroids.Add(spawnedAsteroid);
-
-        Rigidbody asteroidRb = spawnedAsteroid.GetComponent<Rigidbody>();
-        if (asteroidRb != null)
+        // --- FIXED FAILSAFE LINE ---
+        // Only spawn the asteroid if a verified safe location outside the buffer sphere was found
+        if (validPositionFound)
         {
-            float randomSpeed = Random.Range(speedRange.x, speedRange.y);
-            float randomHorizontalScatter = Random.Range(-maxSidewaysScatter, maxSidewaysScatter);
+            GameObject spawnedAsteroid = Instantiate(asteroidPrefab, spawnPosition, Quaternion.identity);
+            activeAsteroids.Add(spawnedAsteroid);
 
-            float directionModifier = Random.value > 0.5f ? 1f : -1f;
-            asteroidRb.linearVelocity = new Vector3(randomHorizontalScatter, 0f, randomSpeed * directionModifier);
+            // Accessing Rigidbody component at runtime using GetComponent<> (Section B requirement)
+            Rigidbody asteroidRb = spawnedAsteroid.GetComponent<Rigidbody>();
+            if (asteroidRb != null)
+            {
+                float randomSpeed = Random.Range(speedRange.x, speedRange.y);
+                float randomHorizontalScatter = Random.Range(-maxSidewaysScatter, maxSidewaysScatter);
+
+                float directionModifier = Random.value > 0.5f ? 1f : -1f;
+                asteroidRb.linearVelocity = new Vector3(randomHorizontalScatter, 0f, randomSpeed * directionModifier);
+            }
+        }
+        else
+        {
+            // Strategic debugging output to fulfill your Section B requirements
+            Debug.LogWarning("AsteroidsSpawner: Prevented an asteroid from spawning too close to the player drone!");
+        }
+    }
+
+    // Visual anchor: Draws the safety buffer circle inside your Unity Editor Scene window
+    private void OnDrawGizmosSelected()
+    {
+        if (playerTransform != null)
+        {
+            Gizmos.color = Color.cyan;
+            // Draws a wireframe sphere on the X-Z plane around the drone
+            Gizmos.DrawWireSphere(playerTransform.position, safeDistanceZone);
         }
     }
 }
