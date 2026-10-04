@@ -1,12 +1,14 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using TMPro;
+
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }
 
     [Header("Score & Victory Configuration")]
     [SerializeField] private TextMeshProUGUI scoreText;
+    [SerializeField] private TextMeshProUGUI highScoreText; // Added for Section A high score display
     [SerializeField] private int targetWinScore = 10;
 
     [Header("In-Scene UI Overlay Panels")]
@@ -19,6 +21,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private string gameplayScene = "Gameplay";
 
     private int currentScore = 0;
+    private int persistentHighScore = 0; // Added to cache the loaded high score
     private bool isGameActive = true;
     private bool isPaused = false;
 
@@ -36,8 +39,10 @@ public class GameManager : MonoBehaviour
 
     private void Start()
     {
-        // Section B requirement: Trace key runtime events in the console
         Debug.Log("GameManager: Initialized gameplay environment tracking loop.");
+
+        // Load the persistent high score using our static SaveManager method (Rubric requirement)
+        persistentHighScore = SaveManager.LoadHighScore();
 
         // Ensure all UI overlay screens are hidden on startup
         InitializeUI();
@@ -46,13 +51,11 @@ public class GameManager : MonoBehaviour
 
     private void Update()
     {
-        // Listen for standard pause input command key (Escape)
         if (Input.GetKeyDown(KeyCode.Escape) && isGameActive)
         {
             TogglePause();
         }
 
-        // Quick shortcut keyboard restart functionality (Rubric requirement)
         if (!isGameActive && Input.GetKeyDown(KeyCode.R))
         {
             RestartGame();
@@ -73,6 +76,13 @@ public class GameManager : MonoBehaviour
         if (!isGameActive) return;
 
         currentScore += points;
+
+        // Dynamic milestone tracking: If player beats the high score mid-game, update it visually
+        if (currentScore > persistentHighScore)
+        {
+            persistentHighScore = currentScore;
+        }
+
         UpdateScoreUI();
 
         Debug.Log($"[Score Update] Scavenged item processed. Score: {currentScore}/{targetWinScore}");
@@ -82,6 +92,7 @@ public class GameManager : MonoBehaviour
             TriggerWinState();
         }
     }
+
     public void SetTargetWinScore(int amount)
     {
         targetWinScore = amount;
@@ -94,6 +105,12 @@ public class GameManager : MonoBehaviour
         {
             scoreText.text = "Scrap Collected: " + currentScore + " / " + targetWinScore;
         }
+
+        // Keep the high score text component up to date on your HUD/Screen
+        if (highScoreText != null)
+        {
+            highScoreText.text = "High Score: " + persistentHighScore;
+        }
     }
 
     public void TogglePause()
@@ -102,13 +119,13 @@ public class GameManager : MonoBehaviour
 
         if (isPaused)
         {
-            Time.timeScale = 0f; 
+            Time.timeScale = 0f;
             if (pausePanel != null) pausePanel.SetActive(true);
             Debug.Log("[Game Loop] System execution paused by player.");
         }
         else
         {
-            Time.timeScale = 1f; 
+            Time.timeScale = 1f;
             if (pausePanel != null) pausePanel.SetActive(false);
             Debug.Log("[Game Loop] System execution resumed.");
         }
@@ -119,7 +136,10 @@ public class GameManager : MonoBehaviour
         if (!isGameActive) return;
 
         isGameActive = false;
-        Time.timeScale = 0f; 
+        Time.timeScale = 0f;
+
+        // --- SECTION A REQUIREMENT: Save data to disk upon death ---
+        SaveManager.SaveHighScore(currentScore);
 
         if (gameOverPanel != null) gameOverPanel.SetActive(true);
         Debug.Log("[Game State] Drone hull compromised. Game Over display initialized.");
@@ -130,7 +150,10 @@ public class GameManager : MonoBehaviour
         if (!isGameActive) return;
 
         isGameActive = false;
-        Time.timeScale = 0f; 
+        Time.timeScale = 0f;
+
+        // --- SECTION A REQUIREMENT: Save data to disk upon winning ---
+        SaveManager.SaveHighScore(currentScore);
 
         if (winPanel != null) winPanel.SetActive(true);
         Debug.Log("[Game State] Scavenger milestones completed. Victory menu displayed.");
@@ -139,21 +162,21 @@ public class GameManager : MonoBehaviour
     public void RestartGame()
     {
         Debug.Log("GameManager: Re-initializing active gameplay arena scene elements.");
-        Time.timeScale = 1f; 
+        Time.timeScale = 1f;
         SceneManager.LoadScene(gameplayScene);
     }
 
     public void ReturnToMainMenu()
     {
         Debug.Log("GameManager: Exiting gameplay layout environment context.");
-        Time.timeScale = 1f; 
+        Time.timeScale = 1f;
         SceneManager.LoadScene(mainMenuScene);
     }
 
     public void StartGame()
     {
         Debug.Log($"GameManager: Loading core gameplay scene context: '{gameplayScene}'");
-        Time.timeScale = 1f; 
+        Time.timeScale = 1f;
         SceneManager.LoadScene(gameplayScene);
     }
 }
