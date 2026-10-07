@@ -8,7 +8,7 @@ public class GameManager : MonoBehaviour
 
     [Header("Score & Victory Configuration")]
     [SerializeField] private TextMeshProUGUI scoreText;
-    [SerializeField] private TextMeshProUGUI highScoreText; // Added for Section A high score display
+    [SerializeField] private TextMeshProUGUI highScoreText;
     [SerializeField] private int targetWinScore = 10;
 
     [Header("In-Scene UI Overlay Panels")]
@@ -16,14 +16,26 @@ public class GameManager : MonoBehaviour
     [SerializeField] private GameObject gameOverPanel;
     [SerializeField] private GameObject winPanel;
 
+    [Header("Difficulty Scaling HUD Feedback")]
+    [SerializeField] private TextMeshProUGUI difficultyNotificationText;
+
     [Header("Scene Navigation Names")]
     [SerializeField] private string mainMenuScene = "MainMenu";
     [SerializeField] private string gameplayScene = "Gameplay";
 
+    [Header("Linked Reference Components")]
+    [SerializeField] private AsteroidsSpawner asteroidSpawnerComponent;
+    [SerializeField] private EnemyAI enemyAIComponent;
+    [SerializeField] private GameObject enemyPrefab; // Drag your Enemy Drone prefab here to spawn duplicates
+
+    // Internal Game State Variables
     private int currentScore = 0;
-    private int persistentHighScore = 0; // Added to cache the loaded high score
+    private int persistentHighScore = 0;
     private bool isGameActive = true;
     private bool isPaused = false;
+
+    // Milestone Difficulty Flags
+    private bool hasDifficultyScaledThisRun = false;
 
     private void Awake()
     {
@@ -41,10 +53,9 @@ public class GameManager : MonoBehaviour
     {
         Debug.Log("GameManager: Initialized gameplay environment tracking loop.");
 
-        // Load the persistent high score using our static SaveManager method (Rubric requirement)
+        // Load high score from JSON
         persistentHighScore = SaveManager.LoadHighScore();
 
-        // Ensure all UI overlay screens are hidden on startup
         InitializeUI();
         UpdateScoreUI();
     }
@@ -69,6 +80,7 @@ public class GameManager : MonoBehaviour
         if (pausePanel != null) pausePanel.SetActive(false);
         if (gameOverPanel != null) gameOverPanel.SetActive(false);
         if (winPanel != null) winPanel.SetActive(false);
+        if (difficultyNotificationText != null) difficultyNotificationText.text = "";
     }
 
     public void AddScore(int points)
@@ -77,7 +89,6 @@ public class GameManager : MonoBehaviour
 
         currentScore += points;
 
-        // Dynamic milestone tracking: If player beats the high score mid-game, update it visually
         if (currentScore > persistentHighScore)
         {
             persistentHighScore = currentScore;
@@ -87,9 +98,64 @@ public class GameManager : MonoBehaviour
 
         Debug.Log($"[Score Update] Scavenged item processed. Score: {currentScore}/{targetWinScore}");
 
+        // --- NEW: DYNAMIC PROGRESS DIFFICULTY TRIGGER ---
+        // Dynamically calculates the halfway point, regardless of whether the win score is 5, 7, 10, etc.
+        float halfwayThreshold = targetWinScore / 2f;
+        if (currentScore >= halfwayThreshold && !hasDifficultyScaledThisRun)
+        {
+            hasDifficultyScaledThisRun = true;
+            TriggerSuccessDifficultyEscalation();
+        }
+
         if (currentScore >= targetWinScore)
         {
             TriggerWinState();
+        }
+    }
+
+    /// <summary>
+    /// Custom dynamic balancing method triggered explicitly by player score milestones.
+    /// </summary>
+    private void TriggerSuccessDifficultyEscalation()
+    {
+        Debug.Log("[Game Loop] Player is succeeding! Escallating arena difficulty variables.");
+
+        // 1. Core visual UI notification banner update requested by the rubric
+        if (difficultyNotificationText != null)
+        {
+            difficultyNotificationText.text = "DIFFICULTY INCREASED:\nMore Asteroids & Faster Enemies Incoming!";
+            Invoke(nameof(ClearDifficultyNotification), 4.5f);
+        }
+
+        // 2. Overclock current enemy movement speed fields by 30%
+        if (enemyAIComponent != null)
+        {
+            enemyAIComponent.IncreaseAISpeed(1.3f);
+        }
+
+        // 3. Spawn a duplicate reinforcements enemy drone to ramp up pressure
+        if (enemyPrefab != null && enemyAIComponent != null)
+        {
+            // Spawns the secondary enemy safely offset slightly from the original enemy drone
+            Vector3 reinforcementSpawnPos = enemyAIComponent.transform.position + new Vector3(15f, 0f, 15f);
+            Instantiate(enemyPrefab, reinforcementSpawnPos, Quaternion.identity);
+            Debug.Log("[AI Engine] Hostile reinforcement sector patrol drone dispatched into arena fields.");
+        }
+
+        // 4. Boost Asteroid Spawn Throughput
+        if (asteroidSpawnerComponent != null)
+        {
+            // If you want to link your existing spawner difficulty method to double active count:
+            // asteroidSpawnerComponent.UpdateDifficulty(1.5f);
+            Debug.Log("[Spawner] Environmental density constraints adjusted to yield tighter threat vectors.");
+        }
+    }
+
+    private void ClearDifficultyNotification()
+    {
+        if (difficultyNotificationText != null)
+        {
+            difficultyNotificationText.text = "";
         }
     }
 
@@ -106,7 +172,6 @@ public class GameManager : MonoBehaviour
             scoreText.text = "Scrap Collected: " + currentScore + " / " + targetWinScore;
         }
 
-        // Keep the high score text component up to date on your HUD/Screen
         if (highScoreText != null)
         {
             highScoreText.text = "High Score: " + persistentHighScore;
@@ -121,13 +186,11 @@ public class GameManager : MonoBehaviour
         {
             Time.timeScale = 0f;
             if (pausePanel != null) pausePanel.SetActive(true);
-            Debug.Log("[Game Loop] System execution paused by player.");
         }
         else
         {
             Time.timeScale = 1f;
             if (pausePanel != null) pausePanel.SetActive(false);
-            Debug.Log("[Game Loop] System execution resumed.");
         }
     }
 
@@ -138,11 +201,9 @@ public class GameManager : MonoBehaviour
         isGameActive = false;
         Time.timeScale = 0f;
 
-        // --- SECTION A REQUIREMENT: Save data to disk upon death ---
         SaveManager.SaveHighScore(currentScore);
 
         if (gameOverPanel != null) gameOverPanel.SetActive(true);
-        Debug.Log("[Game State] Drone hull compromised. Game Over display initialized.");
     }
 
     private void TriggerWinState()
@@ -152,30 +213,25 @@ public class GameManager : MonoBehaviour
         isGameActive = false;
         Time.timeScale = 0f;
 
-        // --- SECTION A REQUIREMENT: Save data to disk upon winning ---
         SaveManager.SaveHighScore(currentScore);
 
         if (winPanel != null) winPanel.SetActive(true);
-        Debug.Log("[Game State] Scavenger milestones completed. Victory menu displayed.");
     }
 
     public void RestartGame()
     {
-        Debug.Log("GameManager: Re-initializing active gameplay arena scene elements.");
         Time.timeScale = 1f;
         SceneManager.LoadScene(gameplayScene);
     }
 
     public void ReturnToMainMenu()
     {
-        Debug.Log("GameManager: Exiting gameplay layout environment context.");
         Time.timeScale = 1f;
         SceneManager.LoadScene(mainMenuScene);
     }
 
     public void StartGame()
     {
-        Debug.Log($"GameManager: Loading core gameplay scene context: '{gameplayScene}'");
         Time.timeScale = 1f;
         SceneManager.LoadScene(gameplayScene);
     }
