@@ -80,7 +80,13 @@ public class GameManager : MonoBehaviour
         if (pausePanel != null) pausePanel.SetActive(false);
         if (gameOverPanel != null) gameOverPanel.SetActive(false);
         if (winPanel != null) winPanel.SetActive(false);
-        if (difficultyNotificationText != null) difficultyNotificationText.text = "";
+
+        // --- ADDED DEFAULT MESSAGE HERE ---
+        // This text shows up immediately when you click Play or restart the game
+        if (difficultyNotificationText != null)
+        {
+            difficultyNotificationText.text = "Raise your score to increase difficulty!";
+        }
     }
 
     public void AddScore(int points)
@@ -98,7 +104,7 @@ public class GameManager : MonoBehaviour
 
         Debug.Log($"[Score Update] Scavenged item processed. Score: {currentScore}/{targetWinScore}");
 
-        // --- NEW: DYNAMIC PROGRESS DIFFICULTY TRIGGER ---
+        // --- DYNAMIC PROGRESS DIFFICULTY TRIGGER ---
         // Dynamically calculates the halfway point, regardless of whether the win score is 5, 7, 10, etc.
         float halfwayThreshold = targetWinScore / 2f;
         if (currentScore >= halfwayThreshold && !hasDifficultyScaledThisRun)

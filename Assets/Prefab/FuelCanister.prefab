@@ -289,4 +289,3 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   collectibleType: Fuel
-  driftSpeed: 4
