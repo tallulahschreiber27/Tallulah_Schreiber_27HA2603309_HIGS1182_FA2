@@ -9,7 +9,11 @@ public class GameManager : MonoBehaviour
     [Header("Score & Victory Configuration")]
     [SerializeField] private TextMeshProUGUI scoreText;
     [SerializeField] private TextMeshProUGUI highScoreText;
-    [SerializeField] private int targetWinScore = 10;
+
+    // --- FIXED SPECIFICATION: Changed to public properties so EnemyAI can read them without reflection ---
+    [SerializeField] private int _targetWinScore = 10;
+    public int targetWinScore => _targetWinScore;
+    public int currentScore { get; private set; } = 0;
 
     [Header("In-Scene UI Overlay Panels")]
     [SerializeField] private GameObject pausePanel;
@@ -25,11 +29,9 @@ public class GameManager : MonoBehaviour
 
     [Header("Linked Reference Components")]
     [SerializeField] private AsteroidsSpawner asteroidSpawnerComponent;
-    [SerializeField] private EnemyAI enemyAIComponent;
-    [SerializeField] private GameObject enemyPrefab; // Drag your Enemy Drone prefab here to spawn duplicates
+    [SerializeField] private GameObject enemyPrefab; // Drag your Enemy Drone prefab asset here
 
     // Internal Game State Variables
-    private int currentScore = 0;
     private int persistentHighScore = 0;
     private bool isGameActive = true;
     private bool isPaused = false;
@@ -81,8 +83,6 @@ public class GameManager : MonoBehaviour
         if (gameOverPanel != null) gameOverPanel.SetActive(false);
         if (winPanel != null) winPanel.SetActive(false);
 
-        // --- ADDED DEFAULT MESSAGE HERE ---
-        // This text shows up immediately when you click Play or restart the game
         if (difficultyNotificationText != null)
         {
             difficultyNotificationText.text = "Raise your score to increase difficulty!";
@@ -104,8 +104,7 @@ public class GameManager : MonoBehaviour
 
         Debug.Log($"[Score Update] Scavenged item processed. Score: {currentScore}/{targetWinScore}");
 
-        // --- DYNAMIC PROGRESS DIFFICULTY TRIGGER ---
-        // Dynamically calculates the halfway point, regardless of whether the win score is 5, 7, 10, etc.
+        // Dynamically calculates the halfway point
         float halfwayThreshold = targetWinScore / 2f;
         if (currentScore >= halfwayThreshold && !hasDifficultyScaledThisRun)
         {
@@ -124,26 +123,32 @@ public class GameManager : MonoBehaviour
     /// </summary>
     private void TriggerSuccessDifficultyEscalation()
     {
-        Debug.Log("[Game Loop] Player is succeeding! Escallating arena difficulty variables.");
+        Debug.Log("[Game Loop] Player is succeeding! Escalating arena difficulty variables.");
 
-        // 1. Core visual UI notification banner update requested by the rubric
+        // 1. Core visual UI notification banner update
         if (difficultyNotificationText != null)
         {
             difficultyNotificationText.text = "DIFFICULTY INCREASED:\nMore Asteroids & Faster Enemies Incoming!";
             Invoke(nameof(ClearDifficultyNotification), 4.5f);
         }
 
-        // 2. Overclock current enemy movement speed fields by 30%
-        if (enemyAIComponent != null)
+        // --- FIXED SECTION: DYNAMICALLY FIND AND SPEED UP ALL SCENE ENEMIES ---
+        // Looks for the original enemy and any clones currently existing in the scene hierarchy
+        EnemyAI[] activeEnemies = FindObjectsByType<EnemyAI>(FindObjectsSortMode.None);
+
+        foreach (EnemyAI enemy in activeEnemies)
         {
-            enemyAIComponent.IncreaseAISpeed(1.3f);
+            enemy.IncreaseAISpeed(1.3f);
+            Debug.Log($"[AI Engine] Successfully increased speed for active unit: {enemy.gameObject.name}");
         }
 
-        // 3. Spawn a duplicate reinforcements enemy drone to ramp up pressure
-        if (enemyPrefab != null && enemyAIComponent != null)
+        // 3. Spawn a duplicate reinforcement enemy drone to ramp up pressure
+        if (enemyPrefab != null)
         {
-            // Spawns the secondary enemy safely offset slightly from the original enemy drone
-            Vector3 reinforcementSpawnPos = enemyAIComponent.transform.position + new Vector3(15f, 0f, 15f);
+            // Safeguard coordinate allocation offset away from our existing unit fields
+            Vector3 spawnOffset = new Vector3(15f, 0f, 15f);
+            Vector3 reinforcementSpawnPos = activeEnemies.Length > 0 ? activeEnemies[0].transform.position + spawnOffset : spawnOffset;
+
             Instantiate(enemyPrefab, reinforcementSpawnPos, Quaternion.identity);
             Debug.Log("[AI Engine] Hostile reinforcement sector patrol drone dispatched into arena fields.");
         }
@@ -167,7 +172,7 @@ public class GameManager : MonoBehaviour
 
     public void SetTargetWinScore(int amount)
     {
-        targetWinScore = amount;
+        _targetWinScore = amount;
         UpdateScoreUI();
     }
 

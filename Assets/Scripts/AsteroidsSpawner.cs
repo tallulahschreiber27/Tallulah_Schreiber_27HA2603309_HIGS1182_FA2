@@ -26,6 +26,9 @@ public class AsteroidsSpawner : MonoBehaviour
 
     private List<GameObject> activeAsteroids = new List<GameObject>();
 
+    // --- NEW: Debug Counter Tracking Variable ---
+    private int totalAsteroidsSpawnedCount = 0;
+
     private void Start()
     {
         if (playerTransform == null)
@@ -39,10 +42,7 @@ public class AsteroidsSpawner : MonoBehaviour
 
     private void Update()
     {
-        // Monitors the list for missing references (destroyed by the box collider physical boundary or player laser)
         MonitorActiveAsteroids();
-
-        // Replenish missing items to keep a steady flow
         MaintainAsteroidPopulation();
     }
 
@@ -50,7 +50,6 @@ public class AsteroidsSpawner : MonoBehaviour
     {
         for (int i = activeAsteroids.Count - 1; i >= 0; i--)
         {
-            // If the asteroid object is null, it was successfully destroyed by the physical box collider boundary or weapon
             if (activeAsteroids[i] == null)
             {
                 activeAsteroids.RemoveAt(i);
@@ -95,12 +94,14 @@ public class AsteroidsSpawner : MonoBehaviour
             attempts++;
         }
 
-        // --- FIXED FAILSAFE LINE ---
-        // Only spawn the asteroid if a verified safe location outside the buffer sphere was found
         if (validPositionFound)
         {
             GameObject spawnedAsteroid = Instantiate(asteroidPrefab, spawnPosition, Quaternion.identity);
             activeAsteroids.Add(spawnedAsteroid);
+
+            // --- NEW: Increment Counter & Print Strategic Rubric Debug Log ---
+            totalAsteroidsSpawnedCount++;
+            Debug.Log($"[Spawner Metrics] Asteroid spawned successfully. Current Active: {activeAsteroids.Count} | Total Session Spawns: {totalAsteroidsSpawnedCount}");
 
             // Accessing Rigidbody component at runtime using GetComponent<> (Section B requirement)
             Rigidbody asteroidRb = spawnedAsteroid.GetComponent<Rigidbody>();
@@ -115,18 +116,15 @@ public class AsteroidsSpawner : MonoBehaviour
         }
         else
         {
-            // Strategic debugging output to fulfill your Section B requirements
             Debug.LogWarning("AsteroidsSpawner: Prevented an asteroid from spawning too close to the player drone!");
         }
     }
 
-    // Visual anchor: Draws the safety buffer circle inside your Unity Editor Scene window
     private void OnDrawGizmosSelected()
     {
         if (playerTransform != null)
         {
             Gizmos.color = Color.cyan;
-            // Draws a wireframe sphere on the X-Z plane around the drone
             Gizmos.DrawWireSphere(playerTransform.position, safeDistanceZone);
         }
     }

@@ -3,8 +3,8 @@ using UnityEngine;
 public class EnemyAI : MonoBehaviour
 {
     [Header("Movement Configuration")]
-    [SerializeField] private float patrolSpeed = 4f;
-    [SerializeField] private float chaseSpeed = 8f;
+    [SerializeField] private float basePatrolSpeed = 4f;
+    [SerializeField] private float baseChaseSpeed = 8f;
 
     [Header("Detection Settings")]
     [SerializeField] private Transform playerTarget;
@@ -20,37 +20,49 @@ public class EnemyAI : MonoBehaviour
     [SerializeField] private GameObject enemyPrefab;
     [SerializeField] private float spawnZCoordinate = 150f;
 
+    // Runtime active speed variables
+    private float activePatrolSpeed;
+    private float activeChaseSpeed;
+
     private bool isChasingPlayer = false;
     private bool movingRight = true;
-    private bool isQuitting = false; // Failsafe to stop spawns when turning off the game
+    private bool isQuitting = false;
     private Rigidbody rb;
 
     private void Start()
     {
-        // Section B requirement: Cached runtime component access references safely
+        // Initialize our runtime speeds to baseline constants
+        activePatrolSpeed = basePatrolSpeed;
+        activeChaseSpeed = baseChaseSpeed;
+
         rb = GetComponent<Rigidbody>();
         if (rb != null)
         {
-            rb.useGravity = false; // Space environment configuration
+            rb.useGravity = false;
             rb.constraints = RigidbodyConstraints.FreezePositionY | RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationY | RigidbodyConstraints.FreezeRotationZ;
         }
 
-        // Auto-locate player target via tags if unassigned
         if (playerTarget == null)
         {
             GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
             if (playerObj != null) playerTarget = playerObj.transform;
         }
+
+        // --- FIXED FOR REINFORCEMENTS ---
+        // If this enemy spawns AFTER the game manager already scaled difficulty,
+        // match the upgraded speed right away.
+        if (GameManager.Instance != null && GameManager.Instance.currentScore >= (GameManager.Instance.targetWinScore / 2f))
+        {
+            IncreaseAISpeed(1.3f);
+        }
     }
 
     private void FixedUpdate()
     {
+        // REMOVED THE REFLECTION CHECK FRAME MONITORING LOOP TO PREVENT CPU LAG
         HandleAIBehaviourStates();
     }
 
-    /// <summary>
-    /// Custom method separating state switching logic handling (Section B modular requirement)
-    /// </summary>
     private void HandleAIBehaviourStates()
     {
         if (playerTarget == null)
@@ -59,10 +71,8 @@ public class EnemyAI : MonoBehaviour
             return;
         }
 
-        // Calculate straight line distance to player drone
         float distanceToPlayer = Vector3.Distance(transform.position, playerTarget.position);
 
-        // State Machine Switch: Move straight down if player detected, otherwise pace left/right
         if (distanceToPlayer <= detectionRange)
         {
             if (!isChasingPlayer)
@@ -83,134 +93,93 @@ public class EnemyAI : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Forces the drone to only move perfectly left and right along the X-axis
-    /// </summary>
     private void RigidPatrolLoop()
     {
         Vector3 moveDirection = Vector3.zero;
 
-        // Toggle direction handling based on boundary checkpoints
         if (movingRight)
         {
             moveDirection = Vector3.right;
-            if (transform.position.x >= xPatrolRange.y)
-            {
-                movingRight = false;
-            }
+            if (transform.position.x >= xPatrolRange.y) movingRight = false;
         }
         else
         {
             moveDirection = Vector3.left;
-            if (transform.position.x <= xPatrolRange.x)
-            {
-                movingRight = true;
-            }
+            if (transform.position.x <= xPatrolRange.x) movingRight = true;
         }
 
-        if (rb != null)
-        {
-            rb.linearVelocity = moveDirection * patrolSpeed;
-        }
+        // Unity 2023+ uses linearVelocity instead of velocity
+        if (rb != null) rb.linearVelocity = moveDirection * activePatrolSpeed;
     }
 
-    /// <summary>
-    /// Drops all side-to-side movement and rushes straight down the map matrix (negative Z-axis)
-    /// </summary>
-    /// <summary>
-    /// Moves left and right to track the player's horizontal alignment while continuously pushing down (Z-axis).
-    /// </summary>
     private void RigidDownwardsChaseLoop()
     {
         float xDirection = 0f;
 
-        // Check if the player is to the right or left of the enemy drone (with a small 1-unit deadzone)
-        if (playerTarget.position.x > transform.position.x + 1f)
-        {
-            xDirection = 1f; // Move Right
-        }
-        else if (playerTarget.position.x < transform.position.x - 1f)
-        {
-            xDirection = -1f; // Move Left
-        }
+        if (playerTarget.position.x > transform.position.x + 1f) xDirection = 1f;
+        else if (playerTarget.position.x < transform.position.x - 1f) xDirection = -1f;
 
-        // Combine horizontal tracking with constant downward movement (Vector3.back is -Z)
         Vector3 moveDirection = new Vector3(xDirection, 0f, -1f).normalized;
 
-        if (rb != null)
-        {
-            rb.linearVelocity = moveDirection * chaseSpeed;
-        }
+        if (rb != null) rb.linearVelocity = moveDirection * activeChaseSpeed;
 
-        // Keep the drone facing its movement velocity vector for crisp visual alignment
-        if (moveDirection != Vector3.zero)
-        {
-            transform.forward = moveDirection;
-        }
+        if (moveDirection != Vector3.zero) transform.forward = moveDirection;
     }
 
-
-    /// <summary>
-    /// Section A / B Collision Check Requirement.
-    /// Triggers Game Over instantly if the enemy slams into the player drone.
-    /// </summary>
     private void OnCollisionEnter(Collision collision)
     {
         if (collision.gameObject.CompareTag("Player"))
         {
-            Debug.Log("[Combat] Collision Event: Enemy drone compromised player ship hull structure!");
-
-            if (GameManager.Instance != null)
-            {
-                GameManager.Instance.TriggerGameOver();
-            }
+            if (GameManager.Instance != null) GameManager.Instance.TriggerGameOver();
         }
     }
 
-    /// <summary>
-    /// Custom method for Section A Difficulty Balancing. Allows ramping speed values over time.
-    /// </summary>
+    // --- FIXED METHOD: CALLED DIRECTLY BY GAMEMANAGER ---
     public void IncreaseAISpeed(float factor)
     {
-        patrolSpeed *= factor;
-        chaseSpeed *= factor;
-        Debug.Log($"[AI Engine] Enemy systems overclocked. New Chase Speed: {chaseSpeed}");
+        basePatrolSpeed = basePatrolSpeed * factor;
+        baseChaseSpeed = baseChaseSpeed * factor;
+        activePatrolSpeed = basePatrolSpeed;
+        activeChaseSpeed = baseChaseSpeed;
+
+        // FORCE A PHYSICAL KICK: If the physics loop is stuck, this forces it to update immediately
+        if (rb != null)
+        {
+            rb.linearVelocity = rb.linearVelocity * factor;
+        }
+
+        // VISUAL TEST: Turn the drone bright red so you know the method actually fired!
+        var renderer = GetComponentInChildren<Renderer>();
+        if (renderer != null)
+        {
+            renderer.material.color = Color.red;
+        }
+
+        Debug.Log($"[AI Engine] {gameObject.name} speed boosted! Patrol: {activePatrolSpeed}, Chase: {activeChaseSpeed}");
     }
 
-    /// <summary>
-    /// INFINITE RESPAWN LOGIC: Triggered automatically the exact millisecond the player destroys this ship.
-    /// </summary>
+
     private void OnDestroy()
     {
-        // Failsafe checks: Don't spawn duplicates if exiting playmode or loading scenes
         if (isQuitting || !Application.isPlaying) return;
 
         if (enemyPrefab != null)
         {
-            // Calculate a fresh random starting X coordinate at the top edge of your bounds
             float randomX = Random.Range(xPatrolRange.x, xPatrolRange.y);
             Vector3 respawnPosition = new Vector3(randomX, transform.position.y, spawnZCoordinate);
-
-            // Instantiate a brand new duplicate back into the arena pool!
-            GameObject newClone = Instantiate(enemyPrefab, respawnPosition, Quaternion.identity);
-
-            // If this ship was already accelerated by a difficulty spike, pass the buff onto the new clone
-            if (patrolSpeed > 4f)
-            {
-                EnemyAI newAI = newClone.GetComponent<EnemyAI>();
-                if (newAI != null)
-                {
-                    newAI.patrolSpeed = this.patrolSpeed;
-                    newAI.chaseSpeed = this.chaseSpeed;
-                }
-            }
-
-            Debug.Log("[AI Engine] Hostile drone destroyed. Automated factory dispatched a replacement ship down the map layout.");
+            Instantiate(enemyPrefab, respawnPosition, Quaternion.identity);
+            Debug.Log("[AI Engine] Enemy destroyed. Replacement drone spawned.");
         }
     }
 
     private void OnApplicationQuit()
     {
         isQuitting = true;
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(transform.position, detectionRange);
     }
 }

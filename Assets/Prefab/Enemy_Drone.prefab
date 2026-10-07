@@ -128,11 +128,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d2a68f23abe4bfd43afb5461eb54d6d5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  patrolSpeed: 4
-  chaseSpeed: 8
+  basePatrolSpeed: 4
+  baseChaseSpeed: 8
   playerTarget: {fileID: 0}
   detectionRange: 70
   xPatrolRange: {x: -198, y: 173}
+  enemyPrefab: {fileID: 1682570319288693984}
+  spawnZCoordinate: 150
 --- !u!1 &3307324249809646451
 GameObject:
   m_ObjectHideFlags: 0

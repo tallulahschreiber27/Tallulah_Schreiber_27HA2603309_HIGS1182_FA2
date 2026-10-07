@@ -1160,9 +1160,17 @@ PrefabInstance:
       value: Enemy_Drone
       objectReference: {fileID: 0}
     - target: {fileID: 2371935427431905206, guid: 79591ca9b9d242946ae97fee434d11f9, type: 3}
+      propertyPath: chaseSpeed
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 2371935427431905206, guid: 79591ca9b9d242946ae97fee434d11f9, type: 3}
       propertyPath: enemyPrefab
       value: 
-      objectReference: {fileID: 1682570319288693984, guid: 79591ca9b9d242946ae97fee434d11f9, type: 3}
+      objectReference: {fileID: 1764305139}
+    - target: {fileID: 2371935427431905206, guid: 79591ca9b9d242946ae97fee434d11f9, type: 3}
+      propertyPath: patrolSpeed
+      value: 2
+      objectReference: {fileID: 0}
     - target: {fileID: 2371935427431905206, guid: 79591ca9b9d242946ae97fee434d11f9, type: 3}
       propertyPath: playerTarget
       value: 
@@ -1171,6 +1179,10 @@ PrefabInstance:
       propertyPath: m_Mesh
       value: 
       objectReference: {fileID: 652328204}
+    - target: {fileID: 4569227155879785795, guid: 79591ca9b9d242946ae97fee434d11f9, type: 3}
+      propertyPath: m_VersionIndex
+      value: 275
+      objectReference: {fileID: 0}
     - target: {fileID: 8592801424080214853, guid: 79591ca9b9d242946ae97fee434d11f9, type: 3}
       propertyPath: m_Mesh
       value: 
@@ -2249,7 +2261,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   scoreText: {fileID: 1391789756}
   highScoreText: {fileID: 1298725139}
-  targetWinScore: 10
+  _targetWinScore: 10
   pausePanel: {fileID: 937680298}
   gameOverPanel: {fileID: 1455580764}
   winPanel: {fileID: 525612700}
@@ -2257,8 +2269,7 @@ MonoBehaviour:
   mainMenuScene: MainMenu
   gameplayScene: Gameplay
   asteroidSpawnerComponent: {fileID: 2068994959}
-  enemyAIComponent: {fileID: 2371935427431905206, guid: 79591ca9b9d242946ae97fee434d11f9, type: 3}
-  enemyPrefab: {fileID: 1682570319288693984, guid: 79591ca9b9d242946ae97fee434d11f9, type: 3}
+  enemyPrefab: {fileID: 1764305139}
 --- !u!4 &1226993732
 Transform:
   m_ObjectHideFlags: 0
@@ -3723,6 +3734,11 @@ MonoBehaviour:
   m_LightCookieSize: {x: 1, y: 1}
   m_LightCookieOffset: {x: 0, y: 0}
   m_SoftShadowQuality: 0
+--- !u!1 &1764305139 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1682570319288693984, guid: 79591ca9b9d242946ae97fee434d11f9, type: 3}
+  m_PrefabInstance: {fileID: 684324305}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1781694488
 GameObject:
   m_ObjectHideFlags: 0
@@ -4412,7 +4428,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &2068994958
 Transform:
   m_ObjectHideFlags: 0
