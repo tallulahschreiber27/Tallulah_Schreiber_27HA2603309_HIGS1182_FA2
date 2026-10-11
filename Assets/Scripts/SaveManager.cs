@@ -76,4 +76,18 @@ public class SaveManager : MonoBehaviour
         // Return a baseline value of zero if no persistent record footprint exists yet
         return 0;
     }
+
+    /// <summary>
+    /// Deletes the persistent JSON score file from system disk storage.
+    /// </summary>
+    public static void ResetPersistentData()
+    {
+        InitializePath();
+
+        if (File.Exists(saveFilePath))
+        {
+            File.Delete(saveFilePath);
+            Debug.Log("[SaveManager] Persistent JSON data file wiped from hard drive successfully.");
+        }
+    }
 }

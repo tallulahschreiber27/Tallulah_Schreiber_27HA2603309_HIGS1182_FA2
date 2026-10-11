@@ -132,7 +132,7 @@ public class GameManager : MonoBehaviour
             Invoke(nameof(ClearDifficultyNotification), 4.5f);
         }
 
-        // 1. Instantly scan the hierarchy to boost any current enemies that are already alive
+        // Instantly scan the hierarchy to boost any current enemies that are already alive
         EnemyAI[] allActiveEnemies = FindObjectsByType<EnemyAI>(FindObjectsSortMode.None);
         foreach (EnemyAI enemy in allActiveEnemies)
         {
@@ -142,16 +142,11 @@ public class GameManager : MonoBehaviour
             }
         }
 
-        // --- FIXED FORCE SPAWN TRIGGER ON MILESTONE INTERCEPT ---
-        // This line physically instantiates the secondary reinforcement copy the exact millisecond hard mode triggers
         if (enemyPrefab != null)
         {
-            // Spawns them at the top horizon line safely
             Vector3 reinforcementSpawnPos = new Vector3(Random.Range(-50f, 50f), 0f, 150f);
-
             GameObject secondaryEnemy = Instantiate(enemyPrefab, reinforcementSpawnPos, Quaternion.identity);
 
-            // Instantly tell the newly spawned clone to use the upgraded fast speed values
             EnemyAI secondaryAI = secondaryEnemy.GetComponent<EnemyAI>();
             if (secondaryAI != null)
             {
@@ -165,6 +160,24 @@ public class GameManager : MonoBehaviour
         {
             Debug.Log("[Spawner] Environmental density constraints adjusted to yield tighter threat vectors.");
         }
+    }
+
+    // --- NEW RESET HIGH SCORE COMMAND METHOD ---
+    /// <summary>
+    /// Public UI method to wipe the score records and refresh your HUD text instantly.
+    /// </summary>
+    public void ResetHighScoreButtonCommand()
+    {
+        // 1. Wipe the actual file from your computer's storage disk
+        SaveManager.ResetPersistentData();
+
+        // 2. Clear out runtime active tracking fields back to baseline defaults
+        persistentHighScore = 0;
+
+        // 3. Immediately re-render screen UI texts so the lecturer sees it fall back to 0 instantly!
+        UpdateScoreUI();
+
+        Debug.Log("[Game Loop] High Score counter reset event cleared through UI button click interface.");
     }
 
     private void ClearDifficultyNotification()
