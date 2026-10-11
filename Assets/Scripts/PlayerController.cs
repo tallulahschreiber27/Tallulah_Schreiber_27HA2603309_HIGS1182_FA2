@@ -134,7 +134,6 @@ public class PlayerController : MonoBehaviour
             {
                 Destroy(hit.collider.gameObject);
                 Debug.Log("[Combat] Hostile Scavenger Drone neutralized via weapon Raycast!");
-                // FIXED: Score awarding removed from here to separate combat tracking from collection milestones
             }
         }
     }

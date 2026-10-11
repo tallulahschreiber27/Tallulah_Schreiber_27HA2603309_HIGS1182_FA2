@@ -26,9 +26,9 @@ public class GameManager : MonoBehaviour
     [Header("Linked Reference Components")]
     [SerializeField] private AsteroidsSpawner asteroidSpawnerComponent;
     [SerializeField] private EnemyAI enemyAIComponent;
-    [SerializeField] private GameObject enemyPrefab; // Drag your Enemy Drone prefab asset here to spawn duplicates
+    [SerializeField] private GameObject enemyPrefab; 
 
-    // Internal Game State Variables
+    
     private int currentScore = 0;
     private int persistentHighScore = 0;
     private bool isGameActive = true;
@@ -105,7 +105,7 @@ public class GameManager : MonoBehaviour
 
         Debug.Log($"[Score Update] Scavenged item processed. Score: {currentScore}/{targetWinScore}");
 
-        // --- DYNAMIC PROGRESS DIFFICULTY TRIGGER ---
+        // Increase difficulty trigger
         float halfwayThreshold = targetWinScore / 2f;
         if (currentScore >= halfwayThreshold && !hasDifficultyScaledThisRun)
         {
@@ -162,19 +162,19 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    // --- NEW RESET HIGH SCORE COMMAND METHOD ---
+    // Reset highscore method
     /// <summary>
-    /// Public UI method to wipe the score records and refresh your HUD text instantly.
+    /// Public UI method to wipe the score records and refresh the HUD text instantly.
     /// </summary>
     public void ResetHighScoreButtonCommand()
     {
-        // 1. Wipe the actual file from your computer's storage disk
+        // Wipe the actual file from the computer's storage disk
         SaveManager.ResetPersistentData();
 
-        // 2. Clear out runtime active tracking fields back to baseline defaults
+        // Clear out runtime active tracking fields back to baseline defaults
         persistentHighScore = 0;
 
-        // 3. Immediately re-render screen UI texts so the lecturer sees it fall back to 0 instantly!
+        // Immediately re-render screen UI texts so it falls back to 0 instantly
         UpdateScoreUI();
 
         Debug.Log("[Game Loop] High Score counter reset event cleared through UI button click interface.");

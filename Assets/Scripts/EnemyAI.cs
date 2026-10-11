@@ -20,7 +20,6 @@ public class EnemyAI : MonoBehaviour
     [SerializeField] private GameObject enemyPrefab;
     [SerializeField] private float spawnZCoordinate = 150f;
 
-    // Runtime active speed variables
     private float activePatrolSpeed;
     private float activeChaseSpeed;
 
@@ -47,7 +46,6 @@ public class EnemyAI : MonoBehaviour
             if (playerObj != null) playerTarget = playerObj.transform;
         }
 
-        // --- CHECK IF BORN INTO HARD MODE ---
         // If this clone spawns into the world while difficulty is already high, buff speed instantly
         if (GameManager.Instance != null && GameManager.Instance.HasDifficultyScaledThisRun)
         {

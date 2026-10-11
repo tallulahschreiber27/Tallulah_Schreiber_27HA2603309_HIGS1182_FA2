@@ -3,7 +3,6 @@ using UnityEngine;
 
 public class SaveManager : MonoBehaviour
 {
-    // A clean wrapper class designed for JSON Utility serialization conversion logic
     [System.Serializable]
     public class GameData
     {
@@ -35,13 +34,10 @@ public class SaveManager : MonoBehaviour
             GameData dataToSave = new GameData();
             dataToSave.highScore = scoreToSave;
 
-            // 1. Convert our class structure data into a readable JSON text string representation
             string jsonString = JsonUtility.ToJson(dataToSave, true);
 
-            // 2. Commit and write the file onto system storage medium
             File.WriteAllText(saveFilePath, jsonString);
 
-            // Required rubric feedback tracing checkpoint log verification statement entry 
             Debug.Log($"[SaveManager] New High Score Saved to JSON: {scoreToSave} scrap! Path: {saveFilePath}");
         }
     }
@@ -58,10 +54,8 @@ public class SaveManager : MonoBehaviour
         {
             try
             {
-                // 1. Fetch text lines stored inside the configuration asset block
                 string jsonString = File.ReadAllText(saveFilePath);
 
-                // 2. Map it back cleanly into our structured object properties
                 GameData loadedData = JsonUtility.FromJson<GameData>(jsonString);
 
                 return loadedData.highScore;

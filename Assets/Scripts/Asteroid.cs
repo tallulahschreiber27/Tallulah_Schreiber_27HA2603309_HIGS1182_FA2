@@ -21,7 +21,7 @@ public class Asteroid : MonoBehaviour
             float randomHorizontalDrift = Random.Range(-1.5f, 1.5f);
 
             Vector3 uniqueDirection = new Vector3(randomHorizontalDrift, 0f, -1f).normalized;
-            rb.linearVelocity = uniqueDirection * randomSpeed; // Unity 6 production standard
+            rb.linearVelocity = uniqueDirection * randomSpeed; 
 
             float randomSpin = Random.Range(-50f, 50f);
             rb.angularVelocity = new Vector3(0f, randomSpin, 0f);
@@ -39,7 +39,7 @@ public class Asteroid : MonoBehaviour
         {
             Debug.Log(" 3D Asteroid hit the Player!");
 
-            // TODO: Call the GameManager to load the Game Over screen here!
+            //Call the gameover screen
 
             Destroy(other.gameObject); // Wipe out the player drone
             Destroy(gameObject);       // Destroy this asteroid on impact
@@ -48,7 +48,7 @@ public class Asteroid : MonoBehaviour
 
     private void OnTriggerExit(Collider other)
     {
-        // Clean up when the asteroid safely exits your large screen boundary box
+        // Clean up when the asteroid safely exits the large screen boundary box
         if (other.CompareTag("GameplayBoundary"))
         {
             Debug.Log($"[Cleanup] '{gameObject.name}' left the arena and cleanly self-destructed.");

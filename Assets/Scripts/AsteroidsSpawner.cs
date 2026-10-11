@@ -26,7 +26,7 @@ public class AsteroidsSpawner : MonoBehaviour
 
     private List<GameObject> activeAsteroids = new List<GameObject>();
 
-    // --- NEW: Debug Counter Tracking Variable ---
+    // Debug counter tracking
     private int totalAsteroidsSpawnedCount = 0;
 
     private void Start()
@@ -99,7 +99,7 @@ public class AsteroidsSpawner : MonoBehaviour
             GameObject spawnedAsteroid = Instantiate(asteroidPrefab, spawnPosition, Quaternion.identity);
             activeAsteroids.Add(spawnedAsteroid);
 
-            // --- NEW: Increment Counter & Print Strategic Rubric Debug Log ---
+            //Informs you how many asteroids are currently in the scene
             totalAsteroidsSpawnedCount++;
             Debug.Log($"[Spawner Metrics] Asteroid spawned successfully. Current Active: {activeAsteroids.Count} | Total Session Spawns: {totalAsteroidsSpawnedCount}");
 
