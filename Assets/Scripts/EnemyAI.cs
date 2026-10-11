@@ -31,7 +31,6 @@ public class EnemyAI : MonoBehaviour
 
     private void Start()
     {
-        // Initialize our runtime speeds to baseline constants
         activePatrolSpeed = basePatrolSpeed;
         activeChaseSpeed = baseChaseSpeed;
 
@@ -48,10 +47,9 @@ public class EnemyAI : MonoBehaviour
             if (playerObj != null) playerTarget = playerObj.transform;
         }
 
-        // --- FIXED FOR REINFORCEMENTS ---
-        // If this enemy spawns AFTER the game manager already scaled difficulty,
-        // match the upgraded speed right away.
-        if (GameManager.Instance != null && GameManager.Instance.currentScore >= (GameManager.Instance.targetWinScore / 2f))
+        // --- CHECK IF BORN INTO HARD MODE ---
+        // If this clone spawns into the world while difficulty is already high, buff speed instantly
+        if (GameManager.Instance != null && GameManager.Instance.HasDifficultyScaledThisRun)
         {
             IncreaseAISpeed(1.3f);
         }
@@ -59,7 +57,6 @@ public class EnemyAI : MonoBehaviour
 
     private void FixedUpdate()
     {
-        // REMOVED THE REFLECTION CHECK FRAME MONITORING LOOP TO PREVENT CPU LAG
         HandleAIBehaviourStates();
     }
 
@@ -108,8 +105,9 @@ public class EnemyAI : MonoBehaviour
             if (transform.position.x <= xPatrolRange.x) movingRight = true;
         }
 
-        // Unity 2023+ uses linearVelocity instead of velocity
         if (rb != null) rb.linearVelocity = moveDirection * activePatrolSpeed;
+
+        if (moveDirection != Vector3.zero) transform.forward = moveDirection;
     }
 
     private void RigidDownwardsChaseLoop()
@@ -123,7 +121,8 @@ public class EnemyAI : MonoBehaviour
 
         if (rb != null) rb.linearVelocity = moveDirection * activeChaseSpeed;
 
-        if (moveDirection != Vector3.zero) transform.forward = moveDirection;
+        // Force orientation straight down the grid map (no weird rotation tilting)
+        transform.forward = Vector3.back;
     }
 
     private void OnCollisionEnter(Collision collision)
@@ -134,21 +133,16 @@ public class EnemyAI : MonoBehaviour
         }
     }
 
-    // --- FIXED METHOD: CALLED DIRECTLY BY GAMEMANAGER ---
     public void IncreaseAISpeed(float factor)
     {
-        basePatrolSpeed = basePatrolSpeed * factor;
-        baseChaseSpeed = baseChaseSpeed * factor;
-        activePatrolSpeed = basePatrolSpeed;
-        activeChaseSpeed = baseChaseSpeed;
+        activePatrolSpeed = basePatrolSpeed * factor;
+        activeChaseSpeed = baseChaseSpeed * factor;
 
-        // FORCE A PHYSICAL KICK: If the physics loop is stuck, this forces it to update immediately
         if (rb != null)
         {
             rb.linearVelocity = rb.linearVelocity * factor;
         }
 
-        // VISUAL TEST: Turn the drone bright red so you know the method actually fired!
         var renderer = GetComponentInChildren<Renderer>();
         if (renderer != null)
         {
@@ -157,7 +151,6 @@ public class EnemyAI : MonoBehaviour
 
         Debug.Log($"[AI Engine] {gameObject.name} speed boosted! Patrol: {activePatrolSpeed}, Chase: {activeChaseSpeed}");
     }
-
 
     private void OnDestroy()
     {

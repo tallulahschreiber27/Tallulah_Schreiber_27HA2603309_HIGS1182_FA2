@@ -1166,7 +1166,7 @@ PrefabInstance:
     - target: {fileID: 2371935427431905206, guid: 79591ca9b9d242946ae97fee434d11f9, type: 3}
       propertyPath: enemyPrefab
       value: 
-      objectReference: {fileID: 1764305139}
+      objectReference: {fileID: 1682570319288693984, guid: 79591ca9b9d242946ae97fee434d11f9, type: 3}
     - target: {fileID: 2371935427431905206, guid: 79591ca9b9d242946ae97fee434d11f9, type: 3}
       propertyPath: patrolSpeed
       value: 2
@@ -2261,7 +2261,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   scoreText: {fileID: 1391789756}
   highScoreText: {fileID: 1298725139}
-  _targetWinScore: 10
+  targetWinScore: 10
   pausePanel: {fileID: 937680298}
   gameOverPanel: {fileID: 1455580764}
   winPanel: {fileID: 525612700}
@@ -2269,7 +2269,8 @@ MonoBehaviour:
   mainMenuScene: MainMenu
   gameplayScene: Gameplay
   asteroidSpawnerComponent: {fileID: 2068994959}
-  enemyPrefab: {fileID: 1764305139}
+  enemyAIComponent: {fileID: 2371935427431905206, guid: 79591ca9b9d242946ae97fee434d11f9, type: 3}
+  enemyPrefab: {fileID: 1682570319288693984, guid: 79591ca9b9d242946ae97fee434d11f9, type: 3}
 --- !u!4 &1226993732
 Transform:
   m_ObjectHideFlags: 0
@@ -3427,7 +3428,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   collectiblePrefab: {fileID: 1088876496055281149, guid: 146fa31127679154baef6ebdb1745376, type: 3}
-  totalFuelCanistersToSpawn: 10
+  totalFuelCanistersToSpawn: 5
   xSpawnRange: {x: -198.2, y: 173}
   zSpawnRange: {x: -157, y: 168}
 --- !u!4 &1508616346
@@ -3734,11 +3735,6 @@ MonoBehaviour:
   m_LightCookieSize: {x: 1, y: 1}
   m_LightCookieOffset: {x: 0, y: 0}
   m_SoftShadowQuality: 0
---- !u!1 &1764305139 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 1682570319288693984, guid: 79591ca9b9d242946ae97fee434d11f9, type: 3}
-  m_PrefabInstance: {fileID: 684324305}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1781694488
 GameObject:
   m_ObjectHideFlags: 0

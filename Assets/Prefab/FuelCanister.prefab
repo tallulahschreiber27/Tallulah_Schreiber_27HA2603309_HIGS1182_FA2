@@ -17,7 +17,7 @@ GameObject:
   - component: {fileID: 8221600406215427163}
   - component: {fileID: 2987031967104685108}
   - component: {fileID: 3593804713768585060}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: FuelCanister
   m_TagString: Collectible
   m_Icon: {fileID: 0}
